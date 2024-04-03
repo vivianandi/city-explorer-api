@@ -24,6 +24,7 @@ To build and run the city-explorer-api application on your local machine, follow
 
 ## Change Log
 8:55: Created repo, added all npm files and json data
+9:30: Finish task 2 but not running 
 
 ## Credit and Collaborations
 <!-- Give credit (and a link) to other people or resources that helped you build this application. -->
