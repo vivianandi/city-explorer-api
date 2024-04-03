@@ -1,6 +1,6 @@
 # City Explorer API - front end
 
-**Site URL**: https://city-explorer-module2.netlify.app
+**Site URL**:
 **Author**: Vivian
 **Version**: 1.0.0
 
@@ -25,6 +25,7 @@ To build and run the city-explorer-api application on your local machine, follow
 ## Change Log
 8:55: Created repo, added all npm files and json data
 9:30: Finish task 2 but not running 
+10:30: Break, raw data is rec now
 
 ## Credit and Collaborations
 <!-- Give credit (and a link) to other people or resources that helped you build this application. -->

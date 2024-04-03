@@ -4,7 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const weatherData = require('./data/weather.json');
+const cities = require('./data/weather.json'); // Renamed the weatherData variable to cities
 
 // Define Forecast class
 class Forecast {
@@ -33,28 +33,21 @@ app.get('/location', getLocation);
 
 // Helper Functions
 
+// Assuming the structure of weather data returned from the API is similar to the data in weather.json
 async function getWeather(request, response) {
   const { lat, lon, searchQuery } = request.query;
-
-  // Find the city based on latitude, longitude, and search query
-  const city = weatherData.find(city => {
-    return city.lat === lat && city.lon === lon && city.city_name.toLowerCase() === searchQuery.toLowerCase();
-  });
-
-  // If city not found or not supported, return an error
-  if (!city || !['Seattle', 'Paris', 'Amman'].includes(city.city_name)) {
-    return response.status(404).json({ error: 'City not found or not supported' });
-  }
 
   // Proceed to fetch weather data for the city
   const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?&lat=${lat}&lon=${lon}&key=${process.env.WEATHER_API_KEY}`;
 
   try {
     const weatherResponse = await axios.get(weatherUrl);
-    const cityForecasts = weatherResponse.data.data.map(element => (
-      new Forecast(element.datetime, `Low of ${element.low_temp}, high of ${element.max_temp} with ${element.weather.description}`)
-    ));
-    response.status(200).json(cityForecasts);
+    // Extract relevant forecast data from the API response
+    const forecasts = weatherResponse.data.data.map(element => ({
+      date: element.valid_date,
+      description: element.weather.description
+    }));
+    response.status(200).json(forecasts);
   } catch (error) {
     console.error(error);
     response.status(500).send('Internal Server Error');
@@ -79,6 +72,7 @@ async function getLocation(request, response) {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 /*
