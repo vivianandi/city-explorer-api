@@ -4,67 +4,60 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const cities = require('./data/weather.json'); // Renamed the weatherData variable to cities
-
-// Define Forecast class
-class Forecast {
-  constructor(date, description) {
-    this.date = date;
-    this.description = description;
-  }
-}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 
-// Home route
-app.get('/', (request, response) => {
-  response.send('<h1>Welcome to City Explorer API!</h1>');
-});
-
-// Weather route
-app.get('/weather', getWeather);
-
-// Location route
+// Route definitions
 app.get('/location', getLocation);
+app.get('/weather', getWeather);
+app.get('/movies', getMovies);
+app.get('*', handleNotFound);
 
-// Helper Functions
+// Route Handlers
 
-// Assuming the structure of weather data returned from the API is similar to the data in weather.json
-async function getWeather(request, response) {
-  const { lat, lon, searchQuery } = request.query;
+async function getLocation(req, res) {
+  // Your getLocation function implementation here
+}
 
-  // Proceed to fetch weather data for the city
-  const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?&lat=${lat}&lon=${lon}&key=${process.env.WEATHER_API_KEY}`;
+async function getWeather(req, res) {
+  // Your getWeather function implementation here
+}
 
+async function getMovies(req, res) {
   try {
-    const weatherResponse = await axios.get(weatherUrl);
-    // Extract relevant forecast data from the API response
-    const forecasts = weatherResponse.data.data.map(element => ({
-      date: element.valid_date,
-      description: element.weather.description
-    }));
-    response.status(200).json(forecasts);
+    const city = req.query.city;
+    const apiKey = process.env.MOVIE_API_KEY;
+    const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${city}`;
+
+    const axiosResponse = await axios.get(url);
+    const movieData = axiosResponse.data.results;
+
+    const movies = movieData.map(movie => new Movie(movie));
+
+    res.json(movies);
   } catch (error) {
-    console.error(error);
-    response.status(500).send('Internal Server Error');
+    console.error('Error fetching movie data:', error);
+    res.status(500).send('Internal Server Error');
   }
 }
 
-async function getLocation(request, response) {
-  const { city } = request.query;
+function handleNotFound(req, res) {
+  res.status(404).send('404 Error');
+}
 
-  const url = `https://us1.locationiq.com/v1/search.php?key=${process.env.LOCATION_API_KEY}&q=${city}&format=json`;
-
-  try {
-    const locationResponse = await axios.get(url);
-    response.json(locationResponse.data[0]);
-  } catch (error) {
-    console.error(error);
-    response.status(500).send('Internal Server Error');
+// Movie class for formatting movie data
+class Movie {
+  constructor(movieData) {
+    this.title = movieData.title;
+    this.overview = movieData.overview;
+    this.average_votes = movieData.vote_average;
+    this.total_votes = movieData.vote_count;
+    this.image_url = `https://image.tmdb.org/t/p/w500/${movieData.poster_path}`;
+    this.popularity = movieData.popularity;
+    this.released_on = movieData.release_date;
   }
 }
 
@@ -72,6 +65,7 @@ async function getLocation(request, response) {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
