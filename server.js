@@ -15,7 +15,7 @@ class Forecast {
 }
 
 const app = express();
-const PORT = process.env.PORT || 5501;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
