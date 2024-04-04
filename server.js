@@ -19,7 +19,21 @@ app.get('*', handleNotFound);
 // Route Handlers
 
 async function getLocation(req, res) {
-  // Your getLocation function implementation here
+  try {
+    const city = req.query.city;
+    const apiKey = process.env.LOCATION_API_KEY;
+    const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${city}&format=json`;
+
+    const axiosResponse = await axios.get(url);
+    const locationData = axiosResponse.data[0];
+
+    const location = new Location(locationData);
+
+    res.json(location);
+  } catch (error) {
+    console.error('Error fetching location data:', error);
+    res.status(500).send('Internal Server Error');
+  }
 }
 
 async function getWeather(req, res) {
@@ -61,10 +75,20 @@ class Movie {
   }
 }
 
+// Location class for formatting location data
+class Location {
+  constructor(locationData) {
+    this.name = locationData.display_name;
+    this.latitude = locationData.lat;
+    this.longitude = locationData.lon;
+  }
+}
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
