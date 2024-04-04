@@ -37,7 +37,21 @@ async function getLocation(req, res) {
 }
 
 async function getWeather(req, res) {
-  // Your getWeather function implementation here
+  try {
+    const { latitude, longitude } = req.query;
+    const apiKey = process.env.WEATHER_API_KEY;
+    const url = `https://api.weatherbit.io/v2.0/forecast/daily?key=${apiKey}&lat=${latitude}&lon=${longitude}&days=5&units=I`;
+
+    const axiosResponse = await axios.get(url);
+    const weatherData = axiosResponse.data.data;
+
+    const weather = weatherData.map(day => new Weather(day));
+
+    res.json(weather);
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    res.status(500).send('Internal Server Error');
+  }
 }
 
 async function getMovies(req, res) {
@@ -60,6 +74,16 @@ async function getMovies(req, res) {
 
 function handleNotFound(req, res) {
   res.status(404).send('404 Error');
+}
+
+// Weather class for formatting weather data
+class Weather {
+  constructor(weatherData) {
+    this.date = weatherData.valid_date;
+    this.forecast = weatherData.weather.description;
+    this.low = weatherData.low_temp;
+    this.high = weatherData.high_temp;
+  }
 }
 
 // Movie class for formatting movie data
