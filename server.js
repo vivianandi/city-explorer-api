@@ -27,6 +27,12 @@ async function getLocation(req, res) {
     const axiosResponse = await axios.get(url);
     const locationData = axiosResponse.data[0];
 
+    if (!locationData) {
+      // If location data is empty or undefined, send a 404 Not Found response
+      res.status(404).send('Location not found');
+      return;
+    }
+
     const location = new Location(locationData);
 
     res.json(location);
