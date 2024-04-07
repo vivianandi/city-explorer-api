@@ -22,7 +22,7 @@ async function getLocation(req, res) {
   try {
     const city = req.query.city;
     const apiKey = process.env.LOCATION_API_KEY;
-    const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${city}&format=json`;
+    const url = `https://us1.locationiq.com/v1/search.php?key=${accessToken}&q=${city}&format=json`;
 
     const axiosResponse = await axios.get(url);
     const locationData = axiosResponse.data[0];
