@@ -18,7 +18,7 @@ app.get('*', handleNotFound);
 
 // Route Handlers
 
-async function getLocation(req, res) {
+async function getLocation(req, res, accessToken) {
   try {
     const city = req.query.city;
     const apiKey = process.env.LOCATION_API_KEY;
