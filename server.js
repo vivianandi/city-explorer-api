@@ -10,11 +10,11 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-const WEATHER_API_KEY = import.meta.env.WEATHER_API_KEY;
-const MOVIE_API_KEY = import.meta.env.MOVIE_API_KEY;
-const accessToken = import.meta.env.VITE_LOCATION_ACCESS_TOKEN;
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+const MOVIE_API_KEY = process.env.MOVIE_API_KEY;
+const accessToken = process.env.VITE_LOCATION_ACCESS_TOKEN;
 console.log("Access Token", accessToken);
-const API = import.meta.env.VITE_API_URL;
+const API = process.env.VITE_API_URL;
 
 // Route definitions
 app.get('/location', getLocation);
