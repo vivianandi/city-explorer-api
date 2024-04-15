@@ -15,66 +15,58 @@ const movieApiKey = process.env.MOVIE_API_KEY;
 app.use(cors());
 
 // Route definitions
-app.get('/location', getLocation);
+app.get('/location', handleLocationRequest);
+app.get('/weather', handleWeatherRequest);
 app.get('/movies', getMovies);
 app.get('*', handleNotFound);
 
 // Route Handlers
 
-async function getLocation(req, res) {
-
-  console.log("Request received for location data:", req.query.city);
+async function handleLocationRequest(req, res) {
   const city = req.query.city;
-  const locationUrl = `https://us1.locationiq.com/v1/search.php?key=${locationApiKey}&q=${city}&format=json`;
-
-  console.log("Location URL:", locationUrl);
-
-  const locationResponse = await axios.get(locationUrl);
-  const locationData = locationResponse.data[0];
-
-  console.log("Location data received:", locationData);
-
-  if (!locationData) {
-    res.status(404).send('Location not found');
-    return;
+  try {
+    const location = await getLocation(city);
+    res.json(location);
+  } catch (error) {
+    console.error("Error fetching location data:", error.message);
+    res.status(500).send("Internal Server Error: Unable to fetch location data.");
   }
-
-  const { lat, lon } = locationData; // Extract latitude and longitude
-
-  console.log("Latitude:", lat, "Longitude:", lon);
-
-  // Construct URL for weather endpoint using latitude and longitude
-  const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?key=${weatherApiKey}&lat=${lat}&lon=${lon}&days=5&units=I`;
-
-  console.log("Weather URL:", weatherUrl);
-
-  // Fetch weather data using coordinates
-  const weatherResponse = await axios.get(weatherUrl);
-  const weatherData = weatherResponse.data.data;
-
-  console.log("Weather data received:", weatherData);
-
-  // Send back location and weather data to client
-  const location = new Location(locationData);
-  const weather = weatherData.map(day => new Weather(day));
-
-  res.json({ location, weather });
-
 }
 
+async function handleWeatherRequest(req, res) {
+  const { lat, lon } = req.query;
+  try {
+    const weather = await getWeather(lat, lon);
+    res.json(weather);
+  } catch (error) {
+    console.error("Error fetching weather data:", error.message);
+    res.status(500).send("Internal Server Error: Unable to fetch weather data.");
+  }
+}
 
+async function getLocation(city) {
+  const locationUrl = `https://us1.locationiq.com/v1/search.php?key=${locationApiKey}&q=${city}&format=json`;
+  const locationResponse = await axios.get(locationUrl);
+  if (!locationResponse.data.length) {
+    throw new Error('Location not found');
+  }
+  const locationData = locationResponse.data[0];
+  return new Location(locationData);
+}
+
+async function getWeather(lat, lon) {
+  const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?key=${weatherApiKey}&lat=${lat}&lon=${lon}&days=5&units=I`;
+  const weatherResponse = await axios.get(weatherUrl);
+  return weatherResponse.data.data.map(day => new Weather(day));
+}
 
 async function getMovies(req, res) {
   try {
     const city = req.query.city;
     const url = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${city}`;
-
     const axiosResponse = await axios.get(url);
     const movieData = axiosResponse.data.results;
-
-    const movies = movieData.map(movie => new Movie(movie));
-
-    res.json(movies);
+    res.json(movieData.map(movie => new Movie(movie)));
   } catch (error) {
     console.error('Error fetching movie data:', error);
     res.status(500).send('Internal Server Error');
@@ -85,7 +77,6 @@ function handleNotFound(req, res) {
   res.status(404).send('404 Error');
 }
 
-// Weather class for formatting weather data
 class Weather {
   constructor(weatherData) {
     this.date = weatherData.valid_date;
@@ -95,7 +86,14 @@ class Weather {
   }
 }
 
-// Movie class for formatting movie data
+class Location {
+  constructor(locationData) {
+    this.name = locationData.display_name;
+    this.latitude = locationData.lat;
+    this.longitude = locationData.lon;
+  }
+}
+
 class Movie {
   constructor(movieData) {
     this.title = movieData.title;
@@ -108,16 +106,6 @@ class Movie {
   }
 }
 
-// Location class for formatting location data
-class Location {
-  constructor(locationData) {
-    this.name = locationData.display_name;
-    this.latitude = locationData.lat;
-    this.longitude = locationData.lon;
-  }
-}
-
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
