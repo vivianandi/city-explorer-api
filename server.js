@@ -21,7 +21,6 @@ app.get('/movies', getMovies);
 app.get('*', handleNotFound);
 
 // Route Handlers
-
 async function handleLocationRequest(req, res) {
   const city = req.query.city;
   try {
@@ -47,7 +46,7 @@ async function handleWeatherRequest(req, res) {
 async function getLocation(city) {
   const locationUrl = `https://us1.locationiq.com/v1/search.php?key=${locationApiKey}&q=${city}&format=json`;
   const locationResponse = await axios.get(locationUrl);
-  if (!locationResponse.data.length) {
+  if (locationResponse.data.length === 0) {
     throw new Error('Location not found');
   }
   const locationData = locationResponse.data[0];
@@ -61,16 +60,11 @@ async function getWeather(lat, lon) {
 }
 
 async function getMovies(req, res) {
-  try {
-    const city = req.query.city;
-    const url = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${city}`;
-    const axiosResponse = await axios.get(url);
-    const movieData = axiosResponse.data.results;
-    res.json(movieData.map(movie => new Movie(movie)));
-  } catch (error) {
-    console.error('Error fetching movie data:', error);
-    res.status(500).send('Internal Server Error');
-  }
+  const city = req.query.city;
+  const url = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${city}`;
+  const axiosResponse = await axios.get(url);
+  const movieData = axiosResponse.data.results;
+  res.json(movieData.map(movie => new Movie(movie)));
 }
 
 function handleNotFound(req, res) {
@@ -109,3 +103,4 @@ class Movie {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
