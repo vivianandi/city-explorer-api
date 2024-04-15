@@ -8,63 +8,66 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const locationApiKey = process.env.LOCATION_API_KEY;
+const weatherApiKey = process.env.WEATHER_API_KEY;
+const movieApiKey = process.env.MOVIE_API_KEY;
+
 app.use(cors());
 
 // Route definitions
 app.get('/location', getLocation);
-app.get('/weather', getWeather);
 app.get('/movies', getMovies);
 app.get('*', handleNotFound);
 
 // Route Handlers
 
 async function getLocation(req, res) {
-  try {
-    const city = req.query.city;
-    const apiKey = process.env.LOCATION_API_KEY;
-    const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${city}&format=json`;
 
-    const axiosResponse = await axios.get(url);
-    const locationData = axiosResponse.data[0];
+  console.log("Request received for location data:", req.query.city);
+  const city = req.query.city;
+  const locationUrl = `https://us1.locationiq.com/v1/search.php?key=${locationApiKey}&q=${city}&format=json`;
 
-    if (!locationData) {
-      // If location data is empty or undefined, send a 404 Not Found response
-      res.status(404).send('Location not found');
-      return;
-    }
+  console.log("Location URL:", locationUrl);
 
-    const location = new Location(locationData);
+  const locationResponse = await axios.get(locationUrl);
+  const locationData = locationResponse.data[0];
 
-    res.json(location);
-  } catch (error) {
-    console.error('Error fetching location data:', error);
-    res.status(500).send('Internal Server Error');
+  console.log("Location data received:", locationData);
+
+  if (!locationData) {
+    res.status(404).send('Location not found');
+    return;
   }
+
+  const { lat, lon } = locationData; // Extract latitude and longitude
+
+  console.log("Latitude:", lat, "Longitude:", lon);
+
+  // Construct URL for weather endpoint using latitude and longitude
+  const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?key=${weatherApiKey}&lat=${lat}&lon=${lon}&days=5&units=I`;
+
+  console.log("Weather URL:", weatherUrl);
+
+  // Fetch weather data using coordinates
+  const weatherResponse = await axios.get(weatherUrl);
+  const weatherData = weatherResponse.data.data;
+
+  console.log("Weather data received:", weatherData);
+
+  // Send back location and weather data to client
+  const location = new Location(locationData);
+  const weather = weatherData.map(day => new Weather(day));
+
+  res.json({ location, weather });
+
 }
 
-async function getWeather(req, res) {
-  try {
-    const { latitude, longitude } = req.query;
-    const apiKey = process.env.WEATHER_API_KEY;
-    const url = `https://api.weatherbit.io/v2.0/forecast/daily?key=${apiKey}&lat=${latitude}&lon=${longitude}&days=5&units=I`;
 
-    const axiosResponse = await axios.get(url);
-    const weatherData = axiosResponse.data.data;
-
-    const weather = weatherData.map(day => new Weather(day));
-
-    res.json(weather);
-  } catch (error) {
-    console.error('Error fetching weather data:', error);
-    res.status(500).send('Internal Server Error');
-  }
-}
 
 async function getMovies(req, res) {
   try {
     const city = req.query.city;
-    const apiKey = process.env.MOVIE_API_KEY;
-    const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${city}`;
+    const url = `https://api.themoviedb.org/3/search/movie?api_key=${movieApiKey}&query=${city}`;
 
     const axiosResponse = await axios.get(url);
     const movieData = axiosResponse.data.results;
